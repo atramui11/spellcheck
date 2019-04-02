@@ -6,9 +6,12 @@
 """
 client needs to send packets to topo object, which is the switch itself
 
-Mininet object is 'net' made from 'topo', so could I tie a Client class to 'net'?
+Mininet object is 'net' made from 'topo', so possibly could tie a Client class to 'net'?
 
-Client class would need to send a word packet to 'topo' using word_to_check header I defined in spellcheck.p4, so Client class would need to know about spellcheck.p4 too. would this be through 'topo'?
+Client class would need to send a word packet to 'topo' using word_to_check header defined in spellcheck.p4
+
+so Client class would need to know about spellcheck.p4 too. would have to be through 'topo' object.
+
 """
 
 
