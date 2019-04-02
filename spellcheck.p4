@@ -8,15 +8,20 @@ to send a word, start w 10 letters
 80 bits is a 10 letter word.
 *******/
 
-header word_to_check_t {
+
+//header for word for spellcheck
+header spellcheck_t {
 	bit<80> spellcheck_word;
 }
 
 
 struct metadata { }
 
+
+
+//add spellcheck word header to struct
 struct headers { 
-	word_to_check_t    word_to_check;
+	spellcheck_t    word_to_check;
 }
 
 
@@ -28,6 +33,7 @@ parser MyParser(packet_in packet,
 
 	state start { transition accept; } 
 
+	//this state 
 	state parse_word_to_check {
 		packet.extract(hdr.word_to_check);
 		transition accept;
