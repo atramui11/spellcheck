@@ -35,24 +35,16 @@ parser MyParser(packet_in packet,
 
 	//this state 
 	state parse_word_to_check {
-		packet.extract(hdr.word_to_check);
+		packet.extract(hdr.spellcheck);
 		transition accept;
 	}
 
-
-
 }
-
-
-
 
 
 control MyVerifyChecksum(inout headers hdr, inout metadata meta) {   
     apply { }
 }
-
-
-
 
 control MyIngress(inout headers hdr,
                   inout metadata meta,
@@ -68,8 +60,8 @@ control MyIngress(inout headers hdr,
     }
     
     
-
-    	//will have to use switch to check spelling in a table as such
+    	//will have to use switch to check spelling via the 
+	//word_dictionary match action table
     	//I think through dictionary.json file ?
 	
 	/*
@@ -90,7 +82,7 @@ control MyIngress(inout headers hdr,
 	    NoAction;
 	  }
 
-	  size = 1024; //would have to be a lot bigger for dictionry table
+	  size = 1024; //probably not related to dictionary size 
 	  default_action = NoAction();
 	}
 	*/
