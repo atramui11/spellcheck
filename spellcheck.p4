@@ -3,9 +3,9 @@
 #include <v1model.p4>
 
 /******
-one letter is 1 byte is 8 bits
-to send a word, start with 10 letters
-thats 80 bits for a 10 letter word
+one letter is 1 byte.
+to send a word, start with 10 letters.
+thats 80 bits for a 10 letter word.
 *******/
 
 header word_to_check_t {
@@ -26,12 +26,11 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-    state start { transition accept; }
-
-	//need to update Parser to be able to recognize a word_to_check header within the incoming packets
+    state start { transition accept; } //not sure if can just accept like this?
 
 	state parse_word_to_check {
 		packet.extract(hdr.word_to_check);
+		transition accept;
 	}
 
 
@@ -106,6 +105,7 @@ control MyDeparser(packet_out packet, in headers hdr) {
 }
 
 
+//egress and ingress are where match action tables are  
 
 V1Switch(
 MyParser(),
@@ -114,4 +114,4 @@ MyIngress(),
 MyEgress(),
 MyComputeChecksum(),
 MyDeparser()
-) main;
+) main; //main triggered here
