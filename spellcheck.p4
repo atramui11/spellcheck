@@ -4,8 +4,8 @@
 
 /******
 one letter is 1 byte.
-to send a word, start with 10 letters.
-thats 80 bits for a 10 letter word.
+to send a word, start w 10 letters
+80 bits is a 10 letter word.
 *******/
 
 header word_to_check_t {
@@ -26,7 +26,7 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-    state start { transition accept; } //not sure if can just accept like this?
+	state start { transition accept; } 
 
 	state parse_word_to_check {
 		packet.extract(hdr.word_to_check);
@@ -52,16 +52,18 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
+
+//simple wire , not sure if appropriate though...
     apply {
         if (standard_metadata.ingress_port == 1)
             standard_metadata.egress_spec = 2;
         else
             standard_metadata.egress_spec = 1;
     }
+    
+    
 
-    // TODO: declare a new table: word_dictionary
     	//will have to use switch to check spelling in a table as such
-    // TODO: Add table entries.
     	//I think through dictionary.json file ?
 	
 	/*
