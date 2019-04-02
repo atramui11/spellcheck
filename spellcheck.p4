@@ -21,7 +21,7 @@ struct metadata { }
 
 //add spellcheck word header to struct
 struct headers { 
-	spellcheck_t    word_to_check;
+	spellcheck_t    spellcheck;
 }
 
 
