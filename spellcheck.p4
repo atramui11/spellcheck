@@ -2,14 +2,24 @@
 #include <core.p4>
 #include <v1model.p4>
 
-/******
-one letter is 1 byte.
-to send a word, start with 10 letters.
-thats 80 bits for a 10 letter word.
-*******/
+const bit<16> TYPE_MYTUNNEL = 0x1212;
+const bit<16> TYPE_IPV4 = 0x800;
+const bit<32> MAX_TUNNEL_ID = 1 << 16;
+
+
+///one letter is 1 byte. to send a word, start with 10 letters
+//thats 80 bits for a 10 letter word
+
+typedef bit<9>  egressSpec_t;
+typedef bit<9>  ingressSpec_t;
+typedef bit<48> macAddr_t;
+typedef bit<32> ip4Addr_t;
+
 
 header word_to_check_t {
 	bit<80> spellcheck_word;
+	macAddr_t srcAddr;
+	macAddr_t dstAddr;
 }
 
 
@@ -26,19 +36,16 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-    state start { transition accept; } //not sure if can just accept like this?
+    state start { transition parse_word_to_check; }
 
 	state parse_word_to_check {
 		packet.extract(hdr.word_to_check);
-		transition accept;
+		transition accept; //default action, done 
 	}
 
 
 
 }
-
-
-
 
 
 control MyVerifyChecksum(inout headers hdr, inout metadata meta) {   
@@ -47,46 +54,48 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 
 
 
-
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
-    apply {
-        if (standard_metadata.ingress_port == 1)
-            standard_metadata.egress_spec = 2;
-        else
-            standard_metadata.egress_spec = 1;
-    }
+    //this port would be provided by control plane 
+	action set_egress_spec(bit<9> port) {
+		standard_metadata.egress_spec = port;
+	}
 
-    // TODO: declare a new table: word_dictionary
-    	//will have to use switch to check spelling in a table as such
-    // TODO: Add table entries.
-    	//I think through dictionary.json file ?
-	
+	table oneHostoneSwitch {
+		key = {standard_metadata.ingress_port : exact; }
+
+		actions = {
+			set_egress_spec;
+			NoAction;
+		}
+		size = 1024;
+		default_action = NoAction();
+
+	}
+    
+
+	apply {oneHostoneSwitch.apply();}
+
+
 	/*
+	action dictLookup(word_to_check_t, word_to_check) {}
+
 	table word_dictionary 
 	{
 	  key = 
-	  {
-	  	//the key should be the WORD sent in header packet
-
-	    //hdr.ipv4.dstAddr: lpm; //lpm = longest prefix match
-	  }
-
-
+	  { hdr.word_to_check.spellcheck_word : lpm; }
 	  actions = 
 	  {
-	    ipv4_forward;
-	    drop;
+	    dict_lookup;
 	    NoAction;
 	  }
 
-	  size = 1024; //would have to be a lot bigger for dictionry table
+	  size = 1024; //would have to be a lot bigger for dictionary table
 	  default_action = NoAction();
 	}
 	*/
-
 
 }
 
