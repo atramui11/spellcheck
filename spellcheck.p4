@@ -16,7 +16,15 @@ typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 
 
-header word_to_check_t {
+/******
+one letter is 1 byte.
+to send a word, start w 10 letters
+80 bits is a 10 letter word.
+*******/
+
+
+//header for word for spellcheck
+header spellcheck_t {
 	bit<80> spellcheck_word;
 	macAddr_t srcAddr;
 	macAddr_t dstAddr;
@@ -25,8 +33,11 @@ header word_to_check_t {
 
 struct metadata { }
 
+
+
+//add spellcheck word header to struct
 struct headers { 
-	word_to_check_t    word_to_check;
+	spellcheck_t    spellcheck;
 }
 
 
@@ -38,12 +49,12 @@ parser MyParser(packet_in packet,
 
     state start { transition parse_word_to_check; }
 
+
+	//this state 
 	state parse_word_to_check {
-		packet.extract(hdr.word_to_check);
-		transition accept; //default action, done 
+		packet.extract(hdr.spellcheck);
+		transition accept;
 	}
-
-
 
 }
 
@@ -53,10 +64,10 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 }
 
 
-
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
+
 
     //this port would be provided by control plane 
 	action set_egress_spec(bit<9> port) {
@@ -93,6 +104,7 @@ control MyIngress(inout headers hdr,
 	  }
 
 	  size = 1024; //would have to be a lot bigger for dictionary table
+	  
 	  default_action = NoAction();
 	}
 	*/

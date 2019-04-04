@@ -12,7 +12,6 @@ class oneHostOneSwitchTopo(Topo):
         switch1 = self.addSwitch('s1')
         self.addLink(host1, switch1, port2=1)
 
-
 def main():
     #instantiate the (s1,h1) topology
     topoObject = oneHostOneSwitchTopo()
