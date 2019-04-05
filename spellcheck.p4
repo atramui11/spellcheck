@@ -7,23 +7,13 @@ const bit<16> TYPE_IPV4 = 0x800;
 const bit<32> MAX_TUNNEL_ID = 1 << 16;
 
 
-///one letter is 1 byte. to send a word, start with 10 letters
-//thats 80 bits for a 10 letter word
-
 typedef bit<9>  egressSpec_t;
 typedef bit<9>  ingressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 
 
-/******
-one letter is 1 byte.
-to send a word, start w 10 letters
-80 bits is a 10 letter word.
-*******/
-
-
-//header for word for spellcheck
+//header for word for spellcheck. 80 bits for a 10 letter word
 header spellcheck_t {
 	bit<80> spellcheck_word;
 	macAddr_t srcAddr;
