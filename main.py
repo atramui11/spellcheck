@@ -9,7 +9,7 @@ from spellCheckWord import spellCheckPacket
 
 
 
-#keep the switch and host global temporarily
+#global temporarily
 host1 = None 
 switch1= None
 
@@ -61,17 +61,22 @@ def main():
     #sendp(spkt) #sendp fx works at layer 2 
 
 
+    #first just gen packet and send to test code
+
     #generate(custom_packet)
 
-    #send custom_packet from host1 to switch1 
-        #p4 file should 
+    #send custom_packet(host1, switch1)
+        """
+        based on the .p4 file, after receiving the packet
+        switch should match on the 'special' (here, spellcheck) header 
+        to search into the dict table (for which eventually will add entries) 
+        """
 
-    #return custom_packet from switch1 to host1
+    #simple 0/1 response back indicating correctness
+        #could probably use spellCheckPacket() again
+        #temp = generatepacket(based on previous search result)
 
-
-
-
-
+    #send temp(switch1, host1)
 
 
     # Start the mininet CLI to interactively run commands in the network:
