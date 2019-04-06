@@ -5,6 +5,8 @@ class oneHostOneSwitchTopo(Topo):
     def __init__(self, **opts):
         Topo.__init__(self, **opts)
         
-        host1 = self.addHost('h1', ip = "10.0.0.1", mac = '00:00:00:00:00:01')
         switch1 = self.addSwitch('s1')
-        self.addLink(host1, switch1, port2=1)
+
+        host1 = self.addHost('h1', ip = "10.0.0.1", mac = '00:00:00:00:00:01')
+        
+        self.addLink(switch1, host1, 1, 2) #switch source port 1 to host dest. port 2

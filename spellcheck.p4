@@ -9,15 +9,14 @@ const bit<32> MAX_TUNNEL_ID = 1 << 16;
 
 typedef bit<9>  egressSpec_t;
 typedef bit<9>  ingressSpec_t;
-typedef bit<48> macAddr_t;
-typedef bit<32> ip4Addr_t;
+
 
 
 //header for word for spellcheck. 80 bits for a 10 letter word
 header spellcheck_t {
 	bit<80> spellcheck_word;
-	macAddr_t srcAddr;
-	macAddr_t dstAddr;
+	bit<16> srcPort;
+    bit<16> dstPort;
 }
 
 
@@ -112,7 +111,10 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
 }
 
 control MyDeparser(packet_out packet, in headers hdr) {
-    apply { }
+    apply {
+    //the control plane needs to replace the wrong word w right one 
+    //packet.emit(hdr.word_to_check.spellcheck_word)
+    }
 }
 
 
