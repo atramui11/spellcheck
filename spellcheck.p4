@@ -39,7 +39,6 @@ parser MyParser(packet_in packet,
     state start { transition parse_word_to_check; }
 
 
-	//this state 
 	state parse_word_to_check {
 		packet.extract(hdr.spellcheck);
 		transition accept;
