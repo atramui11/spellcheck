@@ -5,8 +5,7 @@ localIP     = "127.0.0.1"
 localPort   = 20001
 bufferSize  = 1024
 
-#msgFromServer = "dogf"
-#bytesToSend = str.encode(msgFromServer)
+#msgFromServer = "dogf" #bytesToSend = str.encode(msgFromServer)
 
 # Create a datagram socket
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
@@ -14,7 +13,6 @@ UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 # Bind to address and ip
 UDPServerSocket.bind((localIP, localPort))
  
-
 print("UDP server up. Listening...")
 
 # Listen for incoming packets

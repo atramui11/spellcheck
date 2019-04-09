@@ -6,11 +6,38 @@ const bit<16> TYPE_MYTUNNEL = 0x1212;
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<32> MAX_TUNNEL_ID = 1 << 16;
 
+const bit<16> UDP_PORT = 1234; // not sure 
 
 typedef bit<9>  egressSpec_t;
 typedef bit<9>  ingressSpec_t;
 
+header ethernet_t {
+    macAddr_t dstAddr;
+    macAddr_t srcAddr;
+    bit<16>   etherType;
+}
 
+header ipv4_t {
+    bit<4>    version;
+    bit<4>    ihl;
+    bit<8>    diffserv;
+    bit<16>   totalLen;
+    bit<16>   identification;
+    bit<3>    flags;
+    bit<13>   fragOffset;
+    bit<8>    ttl;
+    bit<8>    protocol;
+    bit<16>   hdrChecksum;
+    ip4Addr_t srcAddr;
+    ip4Addr_t dstAddr;
+}
+
+header udp_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+    bit<16> length_;
+    bit<16> checksum;
+}
 
 //header for word for spellcheck. 80 bits for a 10 letter word
 header spellcheck_t {
@@ -26,7 +53,10 @@ struct metadata { }
 
 //add spellcheck word header to struct
 struct headers { 
-	spellcheck_t    spellcheck;
+	ethernet_t ethernet; //ETHERNET
+	ipv4_t ipv4; //IP
+	udp_t udp; //UDP
+	spellcheck_t spellcheck; //
 }
 
 
@@ -38,7 +68,13 @@ parser MyParser(packet_in packet,
 
     state start { transition parse_word_to_check; }
 
+    //parse ethernet
 
+    //parse IP
+
+    //parse UDP
+
+    //parse custom header
 	state parse_word_to_check {
 		packet.extract(hdr.spellcheck);
 		transition accept;
