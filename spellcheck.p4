@@ -111,7 +111,6 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
 
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
-    //the control plane needs to replace the wrong word w right one 
     //packet.emit(hdr.word_to_check.spellcheck_word)
     }
 }

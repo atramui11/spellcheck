@@ -1,5 +1,5 @@
 import struct
-UDP_PORT = 12
+#UDP_PORT = 12
 
 #spellCheckHeader 
 spChkReqHdr = struct.Struct('!B') # key 
