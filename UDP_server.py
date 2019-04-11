@@ -1,30 +1,33 @@
+#!/usr/bin/env python2
+
 import socket
 from scapy import all as scapy
 
 localIP     = "127.0.0.1"
-localPort   = 20001
+localPort   = 500
 bufferSize  = 1024
 
-#msgFromServer = "dogf" #bytesToSend = str.encode(msgFromServer)
 
 # Create a datagram socket
 UDPServerSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
 
 # Bind to address and ip
 UDPServerSocket.bind((localIP, localPort))
- 
-print("UDP server up. Listening...")
 
-# Listen for incoming packets
-while(True):
 
-    #use Scapy to sniff single incoming packet
-    p = scapy.sniff(filter = 'dst port 20001')
+print "UDP server up. Listening...\n"
 
-    print(p)
-    if p is not None:
-        print("server received packet, it is : ", p)
+def read_packet(pkt):
+    print "type is: " is type(pkt)
+    if pkt is not None:
+        print "server received packet!\n"
+        pkt.show()
 
         #response back to client indicating correctness
-        #scapy.send(scapy.IP(dst="127.0.0.1")/scapy.UDP(dport=20001))
+        print "port is: " +str(pkt[scapy.UDP].dport)
+        scapy.sendp(pkt)
+
+#Sniff incoming packets
+while True:
+    p = scapy.sniff(filter= "port 500", prn=read_packet)
 

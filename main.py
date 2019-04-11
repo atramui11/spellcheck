@@ -26,9 +26,14 @@ def main():
     ###########SET UP TOPOLOGY USING P4 MATCH ACTION TABLES###########
     #this should make the following connections: 1-->2 and 2-->1 
     s1.insertTableEntry(table_name = 'MyIngress.oneHostoneSwitch',
-                        match_fields = {'standard_metadata.ingress_port': 12},
+                        match_fields = {'standard_metadata.ingress_port': 500},
                         action_name = 'MyIngress.set_egress_spec',
-                        action_params = {'port': 12})
+                        action_params = {'port': 501})
+
+    s1.insertTableEntry(table_name = 'MyIngress.oneHostoneSwitch',
+                        match_fields = {'standard_metadata.ingress_port': 501},
+                        action_name = 'MyIngress.set_egress_spec',
+                        action_params = {'port': 500})
 
 
     """
@@ -38,37 +43,41 @@ def main():
                         action_params = {'port': 1})
     """
 
-
-
     #LATER: POPULATE DICTIONARY TABLE 
     #for each dictionary entry in dictionary.json:
     """switch.insertTableEntry(table_name = 'MyIngress.word_dictionary',
                         match_fields = {'hdr.word_to_check.spellcheck_word': ???},
                         action_name = 'MyIngress.set_egress_spec',
                         action_params = {'port': 1})"""
-
     ###########################################################
 
-
-    #run UDP client on h2
-    UDPclient = h2.popen('./UDP_client.py', stdout=sys.stdout, stderr=sys.stdout)
 
     #run UDP server on h1
     UDPserver = h1.popen('./UDP_server.py', stdout=sys.stdout, stderr=sys.stdout)
 
+    #serverMAC = str(h1.cmd('python getMAC.py'))
 
-    time.sleep(1) #delay before starting client 
+    time.sleep(0.4) #server delayed, listening before starting client 
 
 
 
-    #SEND CLIENT REQUEST ON CLIENT NODE H2
-    out = h2.cmd('./UDP_client.py 10.0.0.1 1') # should get 1001 response from server
-    print "out is: " + out.strip()
-    assert out.strip() == "1001"
 
+
+    #SEND CLIENT REQUEST ON CLIENT NODE H2 to send packet
+    out = h2.cmd('python UDP_client.py') #send packet frmo h2 host node 
+    
+    print "out is: " + out.strip() + "\n\n"
+    #assert out.strip() == "1001"
+
+
+    time.sleep(10)
 
     # Start the mininet CLI to interactively run commands in the network:
-    CLI(net) #this line only runs when xterm is called
+    #CLI(net) #this line only runs when xterm is called
+
+
+
+    UDPserver.terminate()
 
     print "OK"
 

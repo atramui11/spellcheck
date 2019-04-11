@@ -6,10 +6,10 @@ const bit<16> TYPE_MYTUNNEL = 0x1212;
 const bit<16> TYPE_IPV4 = 0x800;
 const bit<32> MAX_TUNNEL_ID = 1 << 16;
 
-const bit<16> UDP_PORT = 1234; // not sure 
-
 typedef bit<9>  egressSpec_t;
 typedef bit<9>  ingressSpec_t;
+typedef bit<48> macAddr_t;
+typedef bit<32> ip4Addr_t;
 
 header ethernet_t {
     macAddr_t dstAddr;
@@ -53,10 +53,10 @@ struct metadata { }
 
 //add spellcheck word header to struct
 struct headers { 
-	ethernet_t ethernet; //ETHERNET
-	ipv4_t ipv4; //IP
-	udp_t udp; //UDP
-	spellcheck_t spellcheck; //
+	ethernet_t ethernet;
+	ipv4_t ipv4; 
+	udp_t udp; 
+	spellcheck_t spellcheck; 
 }
 
 
@@ -66,19 +66,33 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-    state start { transition parse_word_to_check; }
+    state start { 
+    	transition parse_ethernet; 
+    }
 
-    //parse ethernet
+    state parse_ethernet {
+    	packet.extract(hdr.ethernet);
+    	transition parse_ipv4;
+    }
 
-    //parse IP
 
-    //parse UDP
+    state parse_ipv4 {
+   		packet.extract(hdr.ipv4);
+    	transition parse_udp;
+    }
 
-    //parse custom header
-	state parse_word_to_check {
+    state parse_udp {
+    	packet.extract(hdr.udp);
+    	transition accept;
+    	//transition parse_spellcheck;
+    }
+
+    /*
+	state parse_spellcheck{
 		packet.extract(hdr.spellcheck);
 		transition accept;
 	}
+	*/
 
 }
 
@@ -147,7 +161,7 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
 
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
-    //packet.emit(hdr.word_to_check.spellcheck_word)
+    	//packet.emit(hdr.word_to_check.spellcheck_word)
     }
 }
 

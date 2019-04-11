@@ -1,25 +1,38 @@
+#!/usr/bin/env python2
+
 import socket
 from scapy import all as scapy
+import sys
+from uuid import getnode
+
+print "client running...\n"
+
+"""
+if len(sys.argv) is not 3:
+	print "numArgsin is: " + str(len(sys.argv)) + "\n"
+	print "Not enough args. usage is ./prog.py dstAddr wordToCheck \n"
+	sys.exit(1)
+"""
 
 
-UDP_IP_ADDRESS = "127.0.0.1"
-UDP_PORT_NO = 20001
-bufferSize = 1024
-msg = "dogf"
+wordToCheck="dogf" #str(sys.argv[1]) #mac for source node h1
+
+print "hi1 \n"
+
+pkt = scapy.Ether()/scapy.IP(dst="10.0.0.1",ttl=5)/scapy.UDP(dport=500)
 
 
-# Create a UDP socket at client side
-UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+print "hi2 \n"
 
-#Send to server using created UDP socket
-#UDPClientSocket.sendto(bytesToSend, serverAddressPort)
+#This sends 1 packet Scapy sendp itself creates socket
+scapy.sendp(pkt)
 
-#here send to server using scapy and UDP socket
-#sends 1 packet and receive response
 
-pkt = scapy.IP(dst="127.0.0.1")/scapy.UDP(dport=20001)
+def read_packet(pkt):
+	"response has been sent back to client"
+	pkt.show()
 
-#connect to addressport and send packet
-UDPClientSocket.connect(("127.0.0.1",20001))
-UDPClientSocket.send(bytes(pkt))
+scapy.sniff(filter = "port 501", prn=read_packet)
+
+print "packet sent! \n"
 
