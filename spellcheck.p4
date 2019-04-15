@@ -107,7 +107,7 @@ control MyIngress(inout headers hdr,
                   inout standard_metadata_t standard_metadata) {
 
 
-    //this port would be provided by control plane 
+    //this port provided by control plane 
 	action set_egress_spec(bit<9> port) {
 		standard_metadata.egress_spec = port;
 	}

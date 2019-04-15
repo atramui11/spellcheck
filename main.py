@@ -9,7 +9,15 @@ import time
 
 ################################# MAIN ###################################
 
+
+
+
+
+
+"""
+#maybe use this later 
 def main():
+
     #one switch, two hosts
     #instantiate the (s1 (switch), h1 (server), h2 (client)) topology
     topoObject = SingleSwitchTopo(2)
@@ -36,30 +44,27 @@ def main():
                         action_params = {'port': 500})
 
 
-    """
+    
     s1.insertTableEntry(table_name = 'MyIngress.oneHostoneSwitch',
                         match_fields = {'standard_metadata.ingress_port': 2},
                         action_name = 'MyIngress.set_egress_spec',
                         action_params = {'port': 1})
-    """
+    
 
     #LATER: POPULATE DICTIONARY TABLE 
     #for each dictionary entry in dictionary.json:
-    """switch.insertTableEntry(table_name = 'MyIngress.word_dictionary',
+    switch.insertTableEntry(table_name = 'MyIngress.word_dictionary',
                         match_fields = {'hdr.word_to_check.spellcheck_word': ???},
                         action_name = 'MyIngress.set_egress_spec',
-                        action_params = {'port': 1})"""
+                        action_params = {'port': 1})
     ###########################################################
 
 
     #run UDP server on h1
     UDPserver = h1.popen('./UDP_server.py', stdout=sys.stdout, stderr=sys.stdout)
 
-    #serverMAC = str(h1.cmd('python getMAC.py'))
 
     time.sleep(0.4) #server delayed, listening before starting client 
-
-
 
 
 
@@ -70,17 +75,17 @@ def main():
     #assert out.strip() == "1001"
 
 
-    time.sleep(10)
+    #time.sleep(10)
 
     # Start the mininet CLI to interactively run commands in the network:
-    #CLI(net) #this line only runs when xterm is called
+    CLI(net) #this line only runs when xterm is called
 
 
 
     UDPserver.terminate()
 
     print "OK"
-
+"""
 
 
 if __name__=="__main__":
