@@ -1,0 +1,22 @@
+1. implement the client/server code, and test on your local machine.
+
+2. Do the Mininet tutorial.
+
+3. Run your client/server code in Mininet using the default switch.
+
+4. Write a P4 program to simply forward packets to the right place, and use P4App to run your client/server code from step 3.
+
+5. Modify the P4 program to do the spell check.
+
+order of parsing:Ethernet IP UDP Word_Header
+
+
+##### USEFUL LINKS #####
+
+https://scapy.readthedocs.io/en/latest/build_dissect.html
+
+http://mininet.org/walkthrough/#part-1-everyday-mininet-usage
+
+https://thepacketgeek.com/scapy-sniffing-with-custom-actions-part-1/
+
+
