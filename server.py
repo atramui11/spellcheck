@@ -5,7 +5,7 @@
 
 import socket
 from scapy import all as scapy
-
+import sys
 
 #This server operates at port 500
 
@@ -29,6 +29,7 @@ def read_packet(pkt):
         scapy.sendp(pkt)
 
         print "Correctness response pkt sent back to client!"
+        sys.exit(0)
 
 
 #Sniff incoming packets. this loops itself apparently 
