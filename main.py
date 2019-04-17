@@ -15,7 +15,7 @@ def main():
     #start net w simple switch w.o. bmv2
     print "running main..."
     topoObj = SingleSwitchTopo(2)
-    net = Mininet(topo = topoObj)
+    net = Mininet(topo = topoObj, controller = OVSController)
     net.start()
     s1,h1,h2 = net.get('s1'), net.get('h1'),net.get('h2')
 
@@ -39,23 +39,19 @@ def main():
 
     net.stop()
 
-    print "OK"
-
-    #IGNORE FOR NOW
-    """
     ############P4 RUNTIME CALLS##########
    	#P4 program to forward packets to the right place
-
-	s1.insertTableEntry(table_name = 'MyIngress.oneHostoneSwitch',
-                        match_fields = {'standard_metadata.ingress_port': 500},
-                        action_name = 'MyIngress.set_egress_spec',
-                        action_params = {'port': 501})
-
+    #server 500
+    #client 501
+    
     s1.insertTableEntry(table_name = 'MyIngress.oneHostoneSwitch',
-                        match_fields = {'standard_metadata.ingress_port': 501},
-                        action_name = 'MyIngress.set_egress_spec',
-                        action_params = {'port': 500})
-
+        match_fields = {'standard_metadata.ingress_port': 500},
+        action_name = 'MyIngress.set_egress_spec',
+        action_params = {'port': 501})
+    
+    print "OK"
+    
+    """
 	#Populating dictionary table
     #for each dictionary entry in dictionary.json:
     switch.insertTableEntry(table_name = 'MyIngress.word_dictionary',
