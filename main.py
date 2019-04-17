@@ -12,34 +12,36 @@ import time
 ################################# MAIN ###################################
 
 def main():
-    #simple switch w.o. bmv2
+    #start net w simple switch w.o. bmv2
     print "running main..."
-
     topoObj = SingleSwitchTopo(2)
-
     net = Mininet(topo = topoObj)
-
     net.start()
-
     s1,h1,h2 = net.get('s1'), net.get('h1'),net.get('h2')
 
+    #start server process
     server = h1.popen('./server.py', stdout=sys.stdout, stderr=sys.stdout)
 
-    print "got here 1 \n"
+    time.sleep(3) #delay server before starting client 
 
-    time.sleep(0.4) #server delayed, listening before starting client 
+    #print "\n\ngot here 2 \n\n"
 
-    print "got here 2 \n"
+    #start client process    
+    client = h2.cmd('sudo python client.py', stdout=sys.stdout, stderr=sys.stdout) 
 
-    #client sends packet to server
-   	#########STUCK HERE, DOES NOT GO PAST
-    out = h2.cmd('python client.py') #send packet frmo h2 host node 
-    
-    print "got here 3 \n"
-
-    print "out is: " + out + " this\n\n"
+    #print "\n\ngot here 3, out is: " + client + "\n\n"
 
 
+    time.sleep(3) #delay before starting mininet
+
+    # Start mininet CLI to interactively run cmds in the network:
+    CLI(net)
+
+    net.stop()
+
+    print "OK"
+
+    #IGNORE FOR NOW
     """
     ############P4 RUNTIME CALLS##########
    	#P4 program to forward packets to the right place
@@ -63,12 +65,7 @@ def main():
     ######################################
 	"""
 
-	#time.sleep(3)
-	
-	# Start the mininet CLI to interactively run commands in the network:
-    CLI(net) #this line only runs when xterm is called
 
-    print "OK"
 
 
 
