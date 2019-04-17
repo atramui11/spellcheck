@@ -25,14 +25,18 @@ def main():
 
     server = h1.popen('./server.py', stdout=sys.stdout, stderr=sys.stdout)
 
+    print "got here 1 \n"
 
     time.sleep(0.4) #server delayed, listening before starting client 
 
+    print "got here 2 \n"
 
     #client sends packet to server
    	#########STUCK HERE, DOES NOT GO PAST
     out = h2.cmd('python client.py') #send packet frmo h2 host node 
     
+    print "got here 3 \n"
+
     print "out is: " + out + " this\n\n"
 
 
