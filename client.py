@@ -27,7 +27,7 @@ def main():
 
 	scapy.sniff(count = 1, filter = "port 501", prn=read_packet)
 
-	sys.exit(0)
+	return
 
 if __name__=="__main__":
     main()
