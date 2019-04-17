@@ -38,4 +38,4 @@ def read_packet(pkt):
 
 scapy.sniff(count = 1, filter = "port 501", prn=read_packet)
 
-
+#ends 

@@ -1,5 +1,7 @@
-from p4app import P4Mininet
+#from p4app import P4Mininet
 import sys
+from mininet.net import Mininet
+from mininet.node import OVSController
 from mininet.cli import CLI
 from scapy import all as scapy
 from mininet.topo import SingleSwitchTopo
@@ -9,9 +11,35 @@ import time
 
 ################################# MAIN ###################################
 
+def main():
+    #simple switch w.o. bmv2
+    print "running main.."
+
+    topoObj = SingleSwitchTopo(2)
+
+    net = Mininet(topo = topoObj)
+
+    net.start()
+
+    s1,h1,h2 = net.get('s1'), net.get('h1'),net.get('h2')
+
+    server = h1.popen('./server.py', stdout=sys.stdout, stderr=sys.stdout)
+    print "hi 1"
+
+    time.sleep(0.4) #server delayed, listening before starting client 
+    print "hi 2" #gets here
+
+    #SEND CLIENT REQUEST ON CLIENT NODE H2 to send packet
 
 
+    #this does run but doesnt print to console #######
 
+
+    out = h2.cmd('python client.py') #send packet frmo h2 host node 
+    
+    print "out is: " + out + "<this\n\n"
+
+    net.stop()
 
 
 """

@@ -3,10 +3,17 @@
 2. Do the Mininet tutorial.
 
 3. Run your client/server code in Mininet using the default switch.
+--This looks to be working fine sending to server and server responds back... 
+
+
 
 4. Write a P4 program to simply forward packets to the right place, and use P4App to run your client/server code from step 3.
 
 5. Modify the P4 program to do the spell check.
+
+
+
+
 
 order of parsing:Ethernet IP UDP Word_Header
 
