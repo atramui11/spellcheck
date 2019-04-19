@@ -3,14 +3,15 @@
 """Client code to be run on simulation node in Mininet"""
 from scapy import all as scapy
 import sys
+from spellCheckPacket import spellCheckPacket
 
 #This client operates at port 501
 
 def clientProcess():
-	#creates a packet here
+	#create special spellcheck packet here
 	pkt = scapy.Ether()/scapy.IP(dst="10.0.0.1",ttl=5)/scapy.UDP(dport=500)
 
-	#This sends 1 packet
+	#Send spellcheck pkt
 	scapy.sendp(pkt)
 	print "packet sent in client.py! \n"
 	return 0

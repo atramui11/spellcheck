@@ -2,9 +2,7 @@
 #include <core.p4>
 #include <v1model.p4>
 
-const bit<16> TYPE_MYTUNNEL = 0x1212;
 const bit<16> TYPE_IPV4 = 0x800;
-const bit<32> MAX_TUNNEL_ID = 1 << 16;
 
 typedef bit<9>  egressSpec_t;
 typedef bit<9>  ingressSpec_t;
@@ -72,7 +70,10 @@ parser MyParser(packet_in packet,
 
     state parse_ethernet {
     	packet.extract(hdr.ethernet);
-    	transition parse_ipv4;
+        transition select (hdr.ethernet.etherType) {
+            TYPE_IPV4 : parse_ipv4;
+            default : accept;
+        }
     }
 
 
