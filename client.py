@@ -4,9 +4,10 @@
 from scapy import all as scapy
 from spellCheckPacket import SPCK
 
-#This client operates at port 501
+#This client operates at port 2
 
 def clientProcess():
+	print "starting client process (sends start packet)..."
 	#create special spellcheck packet here
 	#server needs to change rsp field to 1 if found in dict table
 
@@ -15,10 +16,10 @@ def clientProcess():
 
 	eth = scapy.Ether()
 	ip = scapy.IP(dst="10.0.0.1",ttl=5)
-	udp = scapy.UDP(sport=501,dport=500)
+	udp = scapy.UDP(sport=2,dport=1)
 	#spck = SPCK(word='water',rsp=1)
 	
-	pkt = eth/ip#/udp#/spck
+	pkt = eth/ip/udp #/spck
 
 	pkt.show()
 

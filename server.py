@@ -4,7 +4,7 @@
 from scapy import all as scapy
 import sys
 
-#This server operates at port 500
+#This server operates at port 1
 
 print "Server up. Listening!...\n"
 
@@ -14,7 +14,7 @@ def read_packet(pkt):
         portno = pkt[scapy.UDP].dport #int
 
         #server port
-        if portno==500:
+        if portno==1:
             print "Server has received spellcheck pkt from client: \n\n"
             
             """
@@ -36,16 +36,19 @@ def read_packet(pkt):
 
             pkt.show()
 
-            #pkt = scapy.Ether()/scapy.IP(dst="10.0.0.2",ttl=5)/scapy.UDP(dport=501)
+            #pkt = scapy.Ether()/scapy.IP(dst="10.0.0.2",ttl=5)/scapy.UDP(dport=2)
             #scapy.sendp(pkt)
 
         #client port
-        if portno==501:
+        if portno==2:
             print "Client receieved correctness response pkt: \n\n"
             pkt.show()
             print "\n\n"
         
 
 #Sniff incoming packets. this loops itself apparently 
-scapy.sniff(count = 2, filter= "portrange 500-501", prn=read_packet)
+#scapy.sniff(count = 2, filter= "portrange 500-501", prn=read_packet)
+
+#1 2 port trying 
+scapy.sniff(count = 2, filter= "portrange 1-2", prn=read_packet)
 

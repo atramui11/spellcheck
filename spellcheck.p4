@@ -61,6 +61,8 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
+
+    
     state start {
         transition parse_ethernet; 
     }
@@ -68,7 +70,7 @@ parser MyParser(packet_in packet,
     
     //state for ethernet header (packets always begin here)
     state parse_ethernet {
-    	packet.extract(hdr.ethernet); //problem here!
+    	packet.extract(hdr.ethernet);
         transition select (hdr.ethernet.etherType) {
             TYPE_IPV4: parse_ipv4;
             default : accept;
@@ -79,16 +81,18 @@ parser MyParser(packet_in packet,
     
     state parse_ipv4 {
    		packet.extract(hdr.ipv4);
-    	transition accept;
+        transition select(hdr.ipv4.protocol) {
+            17: parse_udp;
+            default: accept;
+        }
     }
 
-    /*
     state parse_udp {
     	packet.extract(hdr.udp);
     	transition accept;
     	//transition parse_spellcheck;
     }
-    */
+    
 
     /*
 	state parse_spellcheck{
@@ -109,12 +113,48 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
+
+    
+    //separate hardcoded thing
+    apply {
+        if (standard_metadata.ingress_port == 2)
+            standard_metadata.egress_spec = 2;
+        else
+            standard_metadata.egress_spec = 1;
+    }
+    
+
+
+    /*
+    //port forwarding server to client
+    action set_egress_spec(bit<9> port) {
+        standard_metadata.egress_spec = port;
+    }
+
+    table portFwd {
+        key = {standard_metadata.ingress_port : exact; }
+
+        actions = {
+            set_egress_spec;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+
+    }
+    
+
+    apply {portFwd.apply();}
+    */
+
+
+    /*
+    //IPV4 FORWARDING CODE 
     action drop() {
         mark_to_drop();
     }
     
     action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
-        /* TODO: fill out code in action body */
         standard_metadata.egress_spec = port;
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
@@ -137,49 +177,16 @@ control MyIngress(inout headers hdr,
     }
     
     apply {
-        /* TODO: fix ingress control logic
-         *  - ipv4_lpm should be applied only when IPv4 header is valid
-         */
-        ipv4_lpm.apply();
+        //TODO: fix ingress control logic. ipv4_lpm applied only when IPv4 header is valid
+        //ipv4_lpm.apply();
     }
-
-
-
-
-
-
+    */
 
 
     /*
-    apply {
-        if (standard_metadata.ingress_port == 401)
-            standard_metadata.egress_spec = 500;
-        else
-            standard_metadata.egress_spec = 1;
-    }
-
-    
-	action set_egress_spec(bit<9> port) {
-		standard_metadata.egress_spec = port;
-	}
-
-	table oneHostoneSwitch {
-		key = {standard_metadata.ingress_port : exact; }
-
-		actions = {
-			set_egress_spec;
-			NoAction;
-		}
-		size = 1024;
-		default_action = NoAction();
-
-	}
-    
-
-	apply {oneHostoneSwitch.apply();}
-
-
-	action dictLookup(word_to_check_t, word_to_check) {}
+    //dict lookup table and actions
+	
+    action dictLookup(word_to_check_t, word_to_check) {}
 
 	table word_dict 
 	{

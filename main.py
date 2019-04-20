@@ -46,31 +46,29 @@ def main():
     #server 10.0.0.1 client 10.0.0.2
 
     dstAddr = h1.intfs[0].mac
-    print "dstAddr: " + str(dstAddr)
+    print "dstAddr: " + str(h1.intfs[0])
     
-    #adding table entry causes problems
+    # table that will match on the input port and set the output egress_spec
     """
-    s1.insertTableEntry(table_name='MyIngress.ipv4_lpm',
-                        match_fields={'hdr.ipv4.dstAddr': "10.0.0.1"},
-                        action_name='MyIngress.ipv4_forward',
-                        action_params={'dstAddr': "00:00:00:00:01:01",'port':1})
+    s1.insertTableEntry(table_name='MyIngress.portFwd',
+                        match_fields={'standard_metadata.ingress_port': 1},
+                        action_name='MyIngress.set_egress_spec',
+                        action_params={'port':2})
     """
-
-
 
     #############  SERVER
     server = h1.popen('./server.py', stdout=sys.stdout, stderr=sys.stdout)
     time.sleep(0.4) #delay server before starting client 
 
 
-    #############  CLIENT  
-    print "starting client process (sends start packet)..."
+    #############  CLIENT 
     client = h2.cmd('sudo python client.py', stdout=sys.stdout, stderr=sys.stdout) 
     print "\n\n client says: \n\n" + client.strip() + "\n\n"
 
+    time.sleep(3) #delay for server to receive packet
 
     #############  MININET
-    CLI(net) #time.sleep(2)
+    CLI(net) 
     
 
     #############  END
