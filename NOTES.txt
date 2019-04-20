@@ -1,7 +1,5 @@
 1. implement the client/server code, and test on your local machine.
-
 2. Do the Mininet tutorial.
-
 3. Run your client/server code in Mininet using the default switch.
 --------------
 

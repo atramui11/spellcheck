@@ -2,10 +2,10 @@
 #include <core.p4>
 #include <v1model.p4>
 
+
 const bit<16> TYPE_IPV4 = 0x800;
 
 typedef bit<9>  egressSpec_t;
-typedef bit<9>  ingressSpec_t;
 typedef bit<48> macAddr_t;
 typedef bit<32> ip4Addr_t;
 
@@ -33,13 +33,13 @@ header ipv4_t {
 header udp_t {
     bit<16> srcPort;
     bit<16> dstPort;
-    bit<16> length_;
+    bit<16> length;
     bit<16> checksum;
 }
 
-//header for word for spellcheck. 80 bits for a 10 letter word
+
 header spellcheck_t {
-	bit<80> spellcheck_word;
+	bit<80> spellcheck_word; //80 bits for a 10 letter word
 	bit<16> srcPort;
     bit<16> dstPort;
 }
@@ -48,15 +48,12 @@ header spellcheck_t {
 struct metadata { }
 
 
-
-//add spellcheck word header to struct
 struct headers { 
-	ethernet_t ethernet;
+    ethernet_t ethernet;
 	ipv4_t ipv4; 
 	udp_t udp; 
-	spellcheck_t spellcheck; 
+	//spellcheck_t spellcheck; 
 }
-
 
 
 parser MyParser(packet_in packet,
@@ -64,29 +61,34 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-    state start { 
-    	transition parse_ethernet; 
+    state start {
+        transition parse_ethernet; 
     }
 
+    
+    //state for ethernet header (packets always begin here)
     state parse_ethernet {
-    	packet.extract(hdr.ethernet);
+    	packet.extract(hdr.ethernet); //problem here!
         transition select (hdr.ethernet.etherType) {
-            TYPE_IPV4 : parse_ipv4;
+            TYPE_IPV4: parse_ipv4;
             default : accept;
         }
+
     }
 
-
+    
     state parse_ipv4 {
    		packet.extract(hdr.ipv4);
-    	transition parse_udp;
+    	transition accept;
     }
 
+    /*
     state parse_udp {
     	packet.extract(hdr.udp);
     	transition accept;
     	//transition parse_spellcheck;
     }
+    */
 
     /*
 	state parse_spellcheck{
@@ -107,8 +109,56 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
 
+    action drop() {
+        mark_to_drop();
+    }
+    
+    action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
+        /* TODO: fill out code in action body */
+        standard_metadata.egress_spec = port;
+        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
+        hdr.ethernet.dstAddr = dstAddr;
+        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+    }
+    
 
-    //this port provided by control plane 
+    //ROUTING TABLE
+    table ipv4_lpm {
+        key = {
+            hdr.ipv4.dstAddr: lpm;
+        }
+        actions = {
+            ipv4_forward;
+            drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = NoAction();
+    }
+    
+    apply {
+        /* TODO: fix ingress control logic
+         *  - ipv4_lpm should be applied only when IPv4 header is valid
+         */
+        ipv4_lpm.apply();
+    }
+
+
+
+
+
+
+
+
+    /*
+    apply {
+        if (standard_metadata.ingress_port == 401)
+            standard_metadata.egress_spec = 500;
+        else
+            standard_metadata.egress_spec = 1;
+    }
+
+    
 	action set_egress_spec(bit<9> port) {
 		standard_metadata.egress_spec = port;
 	}
@@ -129,10 +179,9 @@ control MyIngress(inout headers hdr,
 	apply {oneHostoneSwitch.apply();}
 
 
-	/*
 	action dictLookup(word_to_check_t, word_to_check) {}
 
-	table word_dictionary 
+	table word_dict 
 	{
 	  key = 
 	  { hdr.word_to_check.spellcheck_word : lpm; }
@@ -157,17 +206,32 @@ control MyEgress(inout headers hdr,
 }
 
 control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
-     apply { }
+     apply { 
+        update_checksum(
+        hdr.ipv4.isValid(),
+            { hdr.ipv4.version,
+              hdr.ipv4.ihl,
+              hdr.ipv4.diffserv,
+              hdr.ipv4.totalLen,
+              hdr.ipv4.identification,
+              hdr.ipv4.flags,
+              hdr.ipv4.fragOffset,
+              hdr.ipv4.ttl,
+              hdr.ipv4.protocol,
+              hdr.ipv4.srcAddr,
+              hdr.ipv4.dstAddr },
+            hdr.ipv4.hdrChecksum,
+            HashAlgorithm.csum16);
+     }
 }
 
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
-    	//packet.emit(hdr.word_to_check.spellcheck_word)
+    	packet.emit(hdr.ethernet); //emit ethernet header into packet
+        packet.emit(hdr.ipv4); //emit ipv4 header into packet
     }
 }
 
-
-//egress and ingress are where match action tables are  
 
 V1Switch(
 MyParser(),
@@ -176,4 +240,4 @@ MyIngress(),
 MyEgress(),
 MyComputeChecksum(),
 MyDeparser()
-) main; //main triggered here
+) main;
