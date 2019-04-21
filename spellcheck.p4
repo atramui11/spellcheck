@@ -2,8 +2,13 @@
 #include <core.p4>
 #include <v1model.p4>
 
-
+// NOTE: new type added here
+const bit<16> TYPE_MYTUNNEL = 0x1212;
 const bit<16> TYPE_IPV4 = 0x800;
+
+/*************************************************************************
+*********************** H E A D E R S  ***********************************
+*************************************************************************/
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
@@ -13,6 +18,11 @@ header ethernet_t {
     macAddr_t dstAddr;
     macAddr_t srcAddr;
     bit<16>   etherType;
+}
+
+header myTunnel_t {
+    bit<16> proto_id;
+    bit<16> dst_id;
 }
 
 header ipv4_t {
@@ -30,126 +40,77 @@ header ipv4_t {
     ip4Addr_t dstAddr;
 }
 
-header udp_t {
-    bit<16> srcPort;
-    bit<16> dstPort;
-    bit<16> length;
-    bit<16> checksum;
+struct metadata {
+    /* empty */
 }
 
-
-header spellcheck_t {
-	bit<80> spellcheck_word; //80 bits for a 10 letter word
-	bit<16> srcPort;
-    bit<16> dstPort;
+// NOTE: Added new header type to headers struct
+struct headers {
+    ethernet_t   ethernet;
+    myTunnel_t   myTunnel;
+    ipv4_t       ipv4;
 }
 
+/*************************************************************************
+*********************** P A R S E R  ***********************************
+*************************************************************************/
 
-struct metadata { }
-
-
-struct headers { 
-    ethernet_t ethernet;
-	ipv4_t ipv4; 
-	udp_t udp; 
-	//spellcheck_t spellcheck; 
-}
-
-
+// TODO: Update the parser to parse the myTunnel header as well
 parser MyParser(packet_in packet,
                 out headers hdr,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-
-    
     state start {
-        transition parse_ethernet; 
+        transition parse_ethernet;
+    }
+
+    state parse_ethernet {
+        packet.extract(hdr.ethernet);
+        transition select(hdr.ethernet.etherType) {
+            TYPE_MYTUNNEL : parse_myTunnel;
+            TYPE_IPV4 : parse_ipv4;
+            default : accept;
+        }
     }
 
     
-    //state for ethernet header (packets always begin here)
-    state parse_ethernet {
-    	packet.extract(hdr.ethernet);
-        transition select (hdr.ethernet.etherType) {
-            TYPE_IPV4: parse_ipv4;
+    state parse_myTunnel {
+        packet.extract(hdr.myTunnel);
+        //transition accept; //can just do this
+
+        transition select(hdr.myTunnel.proto_id) {
+            TYPE_IPV4 : parse_ipv4;
             default : accept;
         }
 
     }
-
     
+
     state parse_ipv4 {
-   		packet.extract(hdr.ipv4);
-        transition select(hdr.ipv4.protocol) {
-            17: parse_udp;
-            default: accept;
-        }
+        packet.extract(hdr.ipv4);
+        transition accept;
     }
 
-    state parse_udp {
-    	packet.extract(hdr.udp);
-    	transition accept;
-    	//transition parse_spellcheck;
-    }
-    
-
-    /*
-	state parse_spellcheck{
-		packet.extract(hdr.spellcheck);
-		transition accept;
-	}
-	*/
 
 }
 
+/*************************************************************************
+************   C H E C K S U M    V E R I F I C A T I O N   *************
+*************************************************************************/
 
 control MyVerifyChecksum(inout headers hdr, inout metadata meta) {   
-    apply { }
+    apply {  }
 }
 
+
+/*************************************************************************
+**************  I N G R E S S   P R O C E S S I N G   *******************
+*************************************************************************/
 
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
-
-
-    
-    //separate hardcoded thing
-    apply {
-        if (standard_metadata.ingress_port == 2)
-            standard_metadata.egress_spec = 2;
-        else
-            standard_metadata.egress_spec = 1;
-    }
-    
-
-
-    /*
-    //port forwarding server to client
-    action set_egress_spec(bit<9> port) {
-        standard_metadata.egress_spec = port;
-    }
-
-    table portFwd {
-        key = {standard_metadata.ingress_port : exact; }
-
-        actions = {
-            set_egress_spec;
-            NoAction;
-        }
-        size = 1024;
-        default_action = NoAction();
-
-    }
-    
-
-    apply {portFwd.apply();}
-    */
-
-
-    /*
-    //IPV4 FORWARDING CODE 
     action drop() {
         mark_to_drop();
     }
@@ -161,8 +122,11 @@ control MyIngress(inout headers hdr,
         hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
     
+    action myTunnel_forward(egressSpec_t port) {
+        standard_metadata.egress_spec = port;
+    }
 
-    //ROUTING TABLE
+
     table ipv4_lpm {
         key = {
             hdr.ipv4.dstAddr: lpm;
@@ -173,51 +137,58 @@ control MyIngress(inout headers hdr,
             NoAction;
         }
         size = 1024;
-        default_action = NoAction();
+        default_action = drop();
     }
-    
+
+
+
+    // TODO: also remember to add table entries!
+    table myTunnel_exact {
+        key = {
+            hdr.myTunnel.dst_id: exact;
+        }
+        actions = {
+            myTunnel_forward;
+            drop;
+            NoAction;
+        }
+        size = 1024;
+        default_action = drop();
+    }
+
     apply {
-        //TODO: fix ingress control logic. ipv4_lpm applied only when IPv4 header is valid
-        //ipv4_lpm.apply();
+        // TODO: Update control flow
+        if (hdr.ipv4.isValid() && !hdr.myTunnel.isValid()) {
+            ipv4_lpm.apply();
+        }
+
+        if (hdr.myTunnel.isValid()) {
+            myTunnel_exact.apply();
+        }
+
     }
-    */
-
-
-    /*
-    //dict lookup table and actions
-	
-    action dictLookup(word_to_check_t, word_to_check) {}
-
-	table word_dict 
-	{
-	  key = 
-	  { hdr.word_to_check.spellcheck_word : lpm; }
-	  actions = 
-	  {
-	    dict_lookup;
-	    NoAction;
-	  }
-
-	  size = 1024; //would have to be a lot bigger for dictionary table
-	  
-	  default_action = NoAction();
-	}
-	*/
-
 }
+
+/*************************************************************************
+****************  E G R E S S   P R O C E S S I N G   *******************
+*************************************************************************/
 
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata) {
-    apply { }
+    apply {  }
 }
 
+/*************************************************************************
+*************   C H E C K S U M    C O M P U T A T I O N   **************
+*************************************************************************/
+
 control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
-     apply { 
-        update_checksum(
-        hdr.ipv4.isValid(),
+     apply {
+	update_checksum(
+	    hdr.ipv4.isValid(),
             { hdr.ipv4.version,
-              hdr.ipv4.ihl,
+	      hdr.ipv4.ihl,
               hdr.ipv4.diffserv,
               hdr.ipv4.totalLen,
               hdr.ipv4.identification,
@@ -229,16 +200,25 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
               hdr.ipv4.dstAddr },
             hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16);
-     }
-}
-
-control MyDeparser(packet_out packet, in headers hdr) {
-    apply {
-    	packet.emit(hdr.ethernet); //emit ethernet header into packet
-        packet.emit(hdr.ipv4); //emit ipv4 header into packet
     }
 }
 
+/*************************************************************************
+***********************  D E P A R S E R  *******************************
+*************************************************************************/
+
+control MyDeparser(packet_out packet, in headers hdr) {
+    apply {
+        packet.emit(hdr.ethernet);
+        // TODO: emit myTunnel header as well
+        packet.emit(hdr.myTunnel);
+        packet.emit(hdr.ipv4);
+    }
+}
+
+/*************************************************************************
+***********************  S W I T C H  *******************************
+*************************************************************************/
 
 V1Switch(
 MyParser(),

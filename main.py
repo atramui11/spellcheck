@@ -8,15 +8,20 @@ import time
 
 
 
-"""
 ##for adding dict entries 
-def addForwardingRule(sw, host, port):
+def addForwardingRule(sw, host, port, addr):
     sw.insertTableEntry(table_name='MyIngress.ipv4_lpm',
                         match_fields={'hdr.ipv4.dstAddr': ["10.0.0.%d" % host, 32]},
                         action_name='MyIngress.ipv4_forward',
-                        action_params={'dstAddr': net.get('h%d' % host).intfs[0].mac,
-                                          'port': port})
-"""
+                        action_params={'dstAddr': addr, 'port': port})
+
+
+def addTunnelFwd(sw, port1, port2):
+    sw.insertTableEntry(table_name='MyIngress.myTunnel_exact',
+                        match_fields={'hdr.myTunnel.dst_id': port1},
+                        action_name='myTunnel_forward',
+                        action_params={'port': port2})
+
 
 """
 #Populating dictionary table
@@ -41,12 +46,19 @@ def main():
 
     s1,h1,h2 = net.get('s1'), net.get('h1'),net.get('h2')
     
+    addr1 = h1.intfs[0].mac #h1 server mac addr
+    addr2 = h2.intfs[0].mac #h2 mac addr
+
+    addForwardingRule(s1,1,1,addr1) #packet headed to server routed back to server and gets port 1
+    addForwardingRule(s1,2,2,addr2) #packet headed to client routed back to client and gets port 2
+
+    addTunnelFwd(s1,1,1)
+    addTunnelFwd(s1,2,2)
+
     #P4 program to forward packets to the right place
     #need to fwd pkt from port 500 (server) to port 501 (client)
-    #server 10.0.0.1 client 10.0.0.2
-
-    dstAddr = h1.intfs[0].mac
-    print "dstAddr: " + str(h1.intfs[0])
+    #dstAddr = h1.intfs[0].mac
+    #print "dstAddr: " + str(h1.intfs[0])
     
     # table that will match on the input port and set the output egress_spec
     """
@@ -56,16 +68,18 @@ def main():
                         action_params={'port':2})
     """
 
+
+    #server 10.0.0.1 client 10.0.0.2
     #############  SERVER
-    server = h1.popen('./server.py', stdout=sys.stdout, stderr=sys.stdout)
+    server = h1.popen('./receive.py', stdout=sys.stdout, stderr=sys.stdout)
     time.sleep(0.4) #delay server before starting client 
+    
 
+    #############  CLIENT sends word to server w tunneled header
+    client = h2.cmd('./send.py 10.1.2.3 "AA" --dst_id 2', stdout=sys.stdout, stderr=sys.stdout) 
+    print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 
-    #############  CLIENT 
-    client = h2.cmd('sudo python client.py', stdout=sys.stdout, stderr=sys.stdout) 
-    print "\n\n client says: \n\n" + client.strip() + "\n\n"
-
-    time.sleep(3) #delay for server to receive packet
+    time.sleep(8) #delay for server to receive and forward packet via P4
 
     #############  MININET
     CLI(net) 

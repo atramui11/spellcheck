@@ -2,7 +2,7 @@
 
 """Client code to be run on simulation node in Mininet"""
 from scapy import all as scapy
-from spellCheckPacket import SPCK
+#from spellCheckPacket import SPCK
 
 #This client operates at port 2
 
@@ -11,7 +11,7 @@ def clientProcess():
 	#create special spellcheck packet here
 	#server needs to change rsp field to 1 if found in dict table
 
-	spckpkt=SPCK() #spw='dog', rsp=2
+	#spckpkt=SPCK() #spw='dog', rsp=2
 
 
 	eth = scapy.Ether()
