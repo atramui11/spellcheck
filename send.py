@@ -11,6 +11,9 @@ from scapy.all import Packet
 from scapy.all import Ether, IP, UDP, TCP
 from myTunnel_header import MyTunnel
 
+
+######### CLIENT SEND CODE
+
 def get_if():
     ifs=get_if_list()
     iface=None # "h1-eth0"
@@ -38,6 +41,7 @@ def main():
 
     #""", word = spckword"""
 
+    #tunneling case
     if (dst_id is not None):
         print "sending on interface {} to dst_id {}".format(iface, str(dst_id))
         pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
@@ -45,7 +49,7 @@ def main():
     else:
         print "sending on interface {} to IP addr {}".format(iface, str(addr))
         pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-        pkt = pkt / IP(dst=addr) / TCP(dport=1234, sport=random.randint(49152,65535)) / args.message
+        pkt = pkt / IP(dst=addr) / TCP(dport=1, sport=random.randint(49152,65535)) / args.message
 
     pkt.show2()
 #    hexdump(pkt)
