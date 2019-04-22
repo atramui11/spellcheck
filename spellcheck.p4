@@ -20,10 +20,6 @@ header ethernet_t {
     bit<16>   etherType;
 }
 
-header myTunnel_t {
-    bit<16> proto_id;
-    bit<16> dst_id;
-}
 
 header ipv4_t {
     bit<4>    version;
@@ -40,6 +36,25 @@ header ipv4_t {
     ip4Addr_t dstAddr;
 }
 
+header tcp_t {
+    bit<16> srcPort;
+    bit<16> dstPort;
+    bit<32> seqNo;
+    bit<32> ackNo;
+    bit<4>  dataOffset;
+    bit<3>  res;
+    bit<3>  ecn;
+    bit<6>  ctrl;
+    bit<16> window;
+    bit<16> checksum;
+    bit<16> urgentPtr;
+}
+
+header spellCheck_t {
+    bit<80> word; //10 letter word to match on in spellcheck table
+    bit<8> rsp; //1 byte correctness response to change in spellcheck table
+}
+
 struct metadata {
     /* empty */
 }
@@ -47,15 +62,15 @@ struct metadata {
 // NOTE: Added new header type to headers struct
 struct headers {
     ethernet_t   ethernet;
-    myTunnel_t   myTunnel;
     ipv4_t       ipv4;
+    tcp_t        tcp;
+    spellCheck_t spchk;
 }
 
 /*************************************************************************
 *********************** P A R S E R  ***********************************
 *************************************************************************/
 
-// TODO: Update the parser to parse the myTunnel header as well
 parser MyParser(packet_in packet,
                 out headers hdr,
                 inout metadata meta,
@@ -65,33 +80,30 @@ parser MyParser(packet_in packet,
         transition parse_ethernet;
     }
 
+
     state parse_ethernet {
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType) {
-            TYPE_MYTUNNEL : parse_myTunnel;
             TYPE_IPV4 : parse_ipv4;
             default : accept;
         }
     }
-
-    
-    state parse_myTunnel {
-        packet.extract(hdr.myTunnel);
-        //transition accept; //can just do this
-
-        transition select(hdr.myTunnel.proto_id) {
-            TYPE_IPV4 : parse_ipv4;
-            default : accept;
-        }
-
-    }
-    
 
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
-        transition accept;
+        transition parse_tcp;
     }
 
+    state parse_tcp {
+        packet.extract(hdr.tcp);
+        transition parse_spchk;
+    }
+    
+    state parse_spchk {
+        packet.extract(hdr.spchk);
+        transition accept; //can just do this
+    }
+    
 
 }
 
@@ -111,28 +123,35 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta) {
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata) {
+
     action drop() {
         mark_to_drop();
     }
     
-    action ipv4_forward(macAddr_t dstAddr, egressSpec_t port) {
-        standard_metadata.egress_spec = port;
-        hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
-        hdr.ethernet.dstAddr = dstAddr;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-    }
     
-    action myTunnel_forward(egressSpec_t port) {
-        standard_metadata.egress_spec = port;
+    action pkt_fwd(egressSpec_t dport) {
+        standard_metadata.egress_spec = dport;
+    }
+
+    action defaultFail() {
+        //default action, if executed means no match in wordDict table
+        hdr.spchk.rsp = 0; 
     }
 
 
-    table ipv4_lpm {
+    //this action needs to somehow link actual dict entries in python/.json file to here
+    action installWordEntry() {
+        hdr.spchk.rsp = 1; 
+    }
+
+
+   
+    table packetForward {
         key = {
-            hdr.ipv4.dstAddr: lpm;
+            hdr.tcp.srcPort: exact;
         }
         actions = {
-            ipv4_forward;
+            pkt_fwd;
             drop;
             NoAction;
         }
@@ -142,30 +161,23 @@ control MyIngress(inout headers hdr,
 
 
 
-    // TODO: also remember to add table entries!
-    table myTunnel_exact {
+
+    table wordDict {
         key = {
-            hdr.myTunnel.dst_id: exact;
+            hdr.spchk.word : exact;
         }
         actions = {
-            myTunnel_forward;
+            installWordEntry;
+            defaultFail;
             drop;
             NoAction;
         }
-        size = 1024;
-        default_action = drop();
+        default_action = defaultFail(); //failed to find match
     }
 
     apply {
-        // TODO: Update control flow
-        if (hdr.ipv4.isValid() && !hdr.myTunnel.isValid()) {
-            ipv4_lpm.apply();
-        }
-
-        if (hdr.myTunnel.isValid()) {
-            myTunnel_exact.apply();
-        }
-
+        packetForward.apply();
+        wordDict.apply();
     }
 }
 
@@ -210,9 +222,9 @@ control MyComputeChecksum(inout headers  hdr, inout metadata meta) {
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
         packet.emit(hdr.ethernet);
-        // TODO: emit myTunnel header as well
-        packet.emit(hdr.myTunnel);
         packet.emit(hdr.ipv4);
+        packet.emit(hdr.tcp);
+        packet.emit(hdr.spchk);
     }
 }
 

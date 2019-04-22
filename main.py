@@ -5,33 +5,48 @@ from mininet.cli import CLI
 from scapy import all as scapy
 from mininet.topo import SingleSwitchTopo
 import time
+import json
 
 
-
+"""
 ##for adding dict entries 
 def addForwardingRule(sw, host, port, addr):
-    sw.insertTableEntry(table_name='MyIngress.ipv4_lpm',
+    sw.insertTableEntry(table_name='MyIngress.packetForward',
                         match_fields={'hdr.ipv4.dstAddr': ["10.0.0.%d" % host, 32]},
-                        action_name='MyIngress.ipv4_forward',
+                        action_name='MyIngress.packetForward',
                         action_params={'dstAddr': addr, 'port': port})
-
-
-def addTunnelFwd(sw, d_id, port2):
-    sw.insertTableEntry(table_name='MyIngress.myTunnel_exact',
-                        match_fields={'hdr.myTunnel.dst_id': [d_id]},
-                        action_name='MyIngress.myTunnel_forward',
-                        action_params={'port': port2})
-
+"""
 
 """
-def populateDictTable(sw)
+s1.insertTableEntry(table_name='MyIngress.portFwd',
+                    match_fields={'standard_metadata.ingress_port': 1},
+                    action_name='MyIngress.set_egress_spec',
+                    action_params={'port':2})
+"""
+
+#P4 program to forward packets to the right place
+def addForwardingRule(sw, sport, dport):
+    sw.insertTableEntry(table_name='MyIngress.packetForward',
+                        match_fields={'hdr.tcp.srcPort': [sport]},
+                        action_name='MyIngress.pkt_fwd',
+                        action_params={'dport': dport})
+
+def populateDictTable(sw):
+    #load dictionary.json into a list
+    data = None
+    with open('dictionary.json') as json_file:  
+        data = json.load(json_file)
+    
+
     #for each dictionary entry in dictionary.json:
-        sw.insertTableEntry(table_name = 'MyIngress.word_dictionary',
-                        match_fields = {'hdr.word_to_check.spellcheck_word': ???},
-                        action_name = 'MyIngress.set_egress_spec',
-                        action_params = {'port': 1})
-"""
-
+    #each p is a word to install in the table
+    for p in data:
+        #print type(p) #it's unicode, need to change to str?
+        sw.insertTableEntry(table_name = 'MyIngress.wordDict',
+                        match_fields = {'hdr.spchk.word': str(p)},
+                        action_name = 'MyIngress.installWordEntry',
+                        action_params = {None})
+    
 
 ################################# MAIN ###################################
 
@@ -49,25 +64,21 @@ def main():
     addr1 = h1.intfs[0].mac #h1 server mac addr
     addr2 = h2.intfs[0].mac #h2 client mac addr
 
-    #Do I need to set default action to drop? think its done already. 
-    addForwardingRule(s1,1,1,addr1) #server (1) receives packet. want to bounce it back to client (2)
-    addForwardingRule(s1,2,2,addr2) #packet headed to client routed back to client and gets port 2
+    #this line specifically causes server to receive packet. tcp sport 2-->tcp dport 1 
+    addForwardingRule(s1,2,1) #client to server forwarding
 
-    addTunnelFwd(s1,1,1) #dst id 1 gets egressSpec 'port' of 1
-    addTunnelFwd(s1,2,2) #dst id 2 gets egressSpec 'port' of 2
+    #fill dictionary table here
+    populateDictTable(s1)
 
-    #P4 program to forward packets to the right place
-    #need to fwd pkt from port 1 (server) to port 2 (client)
+
+    #addTunnelFwd(s1,1,1) #dst id 1 gets egressSpec 'port' of 1
+    #addTunnelFwd(s1,2,2) #dst id 2 gets egressSpec 'port' of 2
+
     #dstAddr = h1.intfs[0].mac
     #print "dstAddr: " + str(h1.intfs[0])
     
     # table that will match on the input port and set the output egress_spec
-    """
-    s1.insertTableEntry(table_name='MyIngress.portFwd',
-                        match_fields={'standard_metadata.ingress_port': 1},
-                        action_name='MyIngress.set_egress_spec',
-                        action_params={'port':2})
-    """
+
 
 
     #server 10.0.0.1 client 10.0.0.2
@@ -76,8 +87,8 @@ def main():
     time.sleep(0.4) #delay server before starting client 
     
 
-    #############  CLIENT sends word to server w tunneled header
-    client = h2.cmd('./send.py --dst_id 1 10.0.0.1 "AA" ', stdout=sys.stdout, stderr=sys.stdout) 
+    #############  CLIENT sends word to server (1)
+    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" "dogs" --dst_id 1', stdout=sys.stdout, stderr=sys.stdout) 
     #client = h2.cmd('./send.py 10.0.0.1 "AA"', stdout=sys.stdout, stderr=sys.stdout)     
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 

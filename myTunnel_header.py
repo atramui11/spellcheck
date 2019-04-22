@@ -5,22 +5,22 @@ import sys, os
 TYPE_MYTUNNEL = 0x1212
 TYPE_IPV4 = 0x0800
 
-class MyTunnel(Packet):
-    name = "MyTunnel"
-    #fields_desc = [StrField("word",'aa'), ShortField("rsp",2)]
+class SPCHK(Packet):
+    name = "SPCHK"
     fields_desc = [
-        ShortField("pid", 0),
-        ShortField("rsp", 2),
-        ShortField("dst_id", 0)
-        ,X3BytesField("wordp1",None)
-        ,X3BytesField("wordp2",None)
-    ]
+        StrFixedLenField("word","",10),
+        ByteField("rsp", 2)
+        ]
     def mysummary(self):
         return self.sprintf("pid=%pid%, dst_id=%dst_id%")
 
+#think this is OK
+bind_layers(Ether, IP, type=TYPE_IPV4)
+bind_layers(IP, TCP)
+bind_layers(TCP, SPCHK)
 
-bind_layers(Ether, MyTunnel, type=TYPE_MYTUNNEL)
-bind_layers(MyTunnel, IP, pid=TYPE_IPV4)
+#bind_layers(Ether, SPCHK, type=TYPE_MYTUNNEL)
+#bind_layers(SPCHK, IP, pid=TYPE_IPV4)
 
 
 """
