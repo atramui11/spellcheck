@@ -68,7 +68,7 @@ def main():
     addForwardingRule(s1,2,1) #client to server forwarding
 
     #fill dictionary table here
-    populateDictTable(s1)
+    #populateDictTable(s1)
 
 
     #addTunnelFwd(s1,1,1) #dst id 1 gets egressSpec 'port' of 1
