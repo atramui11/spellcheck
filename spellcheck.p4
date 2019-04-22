@@ -134,7 +134,7 @@ control MyIngress(inout headers hdr,
     }
 
     action defaultFail() {
-        //default action, if executed means no match in wordDict table
+        //default action. if executed means no match in wordDict table
         hdr.spchk.rsp = 0; 
     }
 
