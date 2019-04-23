@@ -24,29 +24,43 @@ s1.insertTableEntry(table_name='MyIngress.portFwd',
                     action_params={'port':2})
 """
 
-#P4 program to forward packets to the right place
+#P4 Program to forward packets to the right place
 def addForwardingRule(sw, sport, dport):
     sw.insertTableEntry(table_name='MyIngress.packetForward',
                         match_fields={'hdr.tcp.srcPort': [sport]},
                         action_name='MyIngress.pkt_fwd',
                         action_params={'dport': dport})
 
+
+#P4 Table Entries for matching SPCHK.word header for spellcheck
 def populateDictTable(sw):
+    """
     #load dictionary.json into a list
     data = None
     with open('dictionary.json') as json_file:  
         data = json.load(json_file)
-    
 
-    #for each dictionary entry in dictionary.json:
     #each p is a word to install in the table
     for p in data:
-        #print type(p) #it's unicode, need to change to str?
-        sw.insertTableEntry(table_name = 'MyIngress.wordDict',
-                        match_fields = {'hdr.spchk.word': str(p)},
-                        action_name = 'MyIngress.installWordEntry',
-                        action_params = {None})
-    
+        print "installing entry: " + str(p)
+        ack = 1
+        if str(p) is "tripolitan":
+            print "p is tripolitan"
+    """
+
+    #it only encodes exactly the word length (10 bytes=10 letters)
+    #as specified in P4 program!
+
+    sw.insertTableEntry(table_name = 'MyIngress.wordDict',
+                    match_fields = {'hdr.spchk.word': "tripolitan"},
+                    action_name = 'MyIngress.installWordEntry',
+                    action_params = {'resp' : 1})
+    """
+    sw.insertTableEntry(table_name = 'MyIngress.wordDict',
+                    match_fields = {'hdr.spchk.word': "dog"},
+                    action_name = 'MyIngress.installWordEntry',
+                    action_params = {'resp' : 1})
+    """
 
 ################################# MAIN ###################################
 
@@ -68,7 +82,7 @@ def main():
     addForwardingRule(s1,2,1) #client to server forwarding
 
     #fill dictionary table here
-    #populateDictTable(s1)
+    populateDictTable(s1)
 
 
     #addTunnelFwd(s1,1,1) #dst id 1 gets egressSpec 'port' of 1
@@ -88,7 +102,8 @@ def main():
     
 
     #############  CLIENT sends word to server (1)
-    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" "dogs" --dst_id 1', stdout=sys.stdout, stderr=sys.stdout) 
+    myWord = "tripolitan"
+    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % myWord, stdout=sys.stdout, stderr=sys.stdout) 
     #client = h2.cmd('./send.py 10.0.0.1 "AA"', stdout=sys.stdout, stderr=sys.stdout)     
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 

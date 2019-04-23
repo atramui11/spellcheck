@@ -53,8 +53,8 @@ def main():
 
     print "sending on interface {} to IP addr {}".format(iface, str(addr))
     pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-    #rsp=2 means iniitially incorrect
-    pkt = pkt / IP(dst=addr) / TCP(dport=dst_id, sport=2) / SPCHK(rsp=2,word=word) / args.message
+    rsps=99 #means iniitially incorrect
+    pkt = pkt / IP(dst=addr) / TCP(dport=dst_id, sport=2) / SPCHK(rsp=rsps,word=word) / args.message
     
     pkt.show2()
 #    hexdump(pkt)

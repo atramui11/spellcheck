@@ -94,10 +94,12 @@ parser MyParser(packet_in packet,
         transition parse_tcp;
     }
 
+
     state parse_tcp {
         packet.extract(hdr.tcp);
         transition parse_spchk;
     }
+
     
     state parse_spchk {
         packet.extract(hdr.spchk);
@@ -139,8 +141,8 @@ control MyIngress(inout headers hdr,
     }
 
 
-    //this action needs to somehow link actual dict entries in python/.json file to here
-    action installWordEntry() {
+    //this action must somehow link actual dict entries in py json file to here
+    action installWordEntry(bit<8> resp) {
         hdr.spchk.rsp = 1; 
     }
 
@@ -172,6 +174,7 @@ control MyIngress(inout headers hdr,
             drop;
             NoAction;
         }
+        size=1024;
         default_action = defaultFail(); //failed to find match
     }
 

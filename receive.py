@@ -29,8 +29,8 @@ def get_if():
 #client 2 and server 1 packet handling code
 def handle_pkt(pkt):
     if SPCHK in pkt and (TCP in pkt and pkt[TCP].dport == 1):
-        print "\n\n\nSERVER RECEIVED PACKET\n\n\n"
-        pkt.show2()
+        print "\n\n\nSERVER RECEIVED PACKET. WORD IS: \n\n" + str(pkt[SPCHK].word)
+        #pkt.show2()
 
         #if there is a match in P4 table wordDict P4 code should send back pkt to client rsp=1
         if pkt[SPCHK].rsp is 1:
@@ -38,14 +38,22 @@ def handle_pkt(pkt):
             iface = get_if()
             pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
             pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=1) / "PAYLOAD"
-            pkt.show2()
+            #pkt.show2()
+            sendp(pkt, iface=iface, verbose=False)
+        else:
+            #no match, send back pkt with rsp = 0
+            print "\n\n\nWORD FAILED SPELLCHECK\n\n\n"
+            iface = get_if()
+            pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
+            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=0) / "PAYLOAD"
+            #pkt.show2()
             sendp(pkt, iface=iface, verbose=False)
 
 #        hexdump(pkt)
 #        print "len(pkt) = ", len(pkt)
         sys.stdout.flush()
     elif SPCHK in pkt and (TCP in pkt and pkt[TCP].dport == 2):
-        print "\n\n\nCLIENT RECEIVED PACKET\n\n\n"
+        print "\n\n\nCLIENT RECEIVED PACKET THAT SAYS:\n"
         pkt.show2()
 
             
