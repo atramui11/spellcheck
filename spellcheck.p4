@@ -50,8 +50,24 @@ header tcp_t {
     bit<16> urgentPtr;
 }
 
+header oneLetter_h {bit<8> letter;}
+header twoLetters_h {bit<16> letters;}
+header threeLetters_h {bit<24> letters;}
+header fourLetters_h {bit<32> letters;}
+
+
+
+header_union varword_h {
+  oneLetter_h oneLetter;
+  twoLetters_h twoLetters;
+  threeLetters_h threeLetters;
+  fourLetters_h fourLetters;
+}
+
+
 header spellCheck_t {
     bit<80> word; //10 letter word to match on in spellcheck table
+    //varword_h word;
     bit<8> rsp; //1 byte correctness response to change in spellcheck table
 }
 
@@ -76,36 +92,39 @@ parser MyParser(packet_in packet,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
-    state start {
-        transition parse_ethernet;
-    }
+    state start {transition parse_ethernet;}
+    state parse_ethernet {packet.extract(hdr.ethernet); transition parse_ipv4;}
+
+    state parse_ipv4 {packet.extract(hdr.ipv4);transition parse_tcp;}
 
 
-    state parse_ethernet {
-        packet.extract(hdr.ethernet);
-        transition select(hdr.ethernet.etherType) {
-            TYPE_IPV4 : parse_ipv4;
-            default : accept;
-        }
-    }
-
-    state parse_ipv4 {
-        packet.extract(hdr.ipv4);
-        transition parse_tcp;
-    }
+    state parse_tcp {packet.extract(hdr.tcp); transition parse_spchk;}
 
 
-    state parse_tcp {
-        packet.extract(hdr.tcp);
-        transition parse_spchk;
-    }
+    //this evaluates to a state
+    //select(hdr.length.onebyte.isValid(), 
+    //hdr.length.twobyte.isValid(), hdr.length.fourbyte.isValid()) {}
 
-    
+
+
+    //need to parse a variable number of bytes here 
     state parse_spchk {
+        /*
+       transition select(packet.lookahead<bit<8>>()) {
+            8w0x0 : parse_tcp_option_end;
+            8w0x1 : parse_tcp_option_nop;
+            8w0x2 : parse_tcp_option_ss;
+            8w0x3 : parse_tcp_option_s;
+            8w0x5 : parse_tcp_option_sack;
+        }
+        */
         packet.extract(hdr.spchk);
-        transition accept; //can just do this
+        transition accept;
     }
     
+
+
+
 
 }
 
@@ -143,7 +162,22 @@ control MyIngress(inout headers hdr,
 
     //this action must somehow link actual dict entries in py json file to here
     action installWordEntry(bit<8> resp) {
-        hdr.spchk.rsp = 1; 
+        hdr.spchk.rsp = 1;
+    }
+
+
+
+    table wordDict {
+        key = {hdr.spchk.word : lpm;}
+        
+        actions = {
+            installWordEntry;
+            defaultFail;
+            drop;
+            NoAction;
+        }
+        size=1024;
+        default_action = defaultFail(); //failed to find match
     }
 
 
@@ -164,20 +198,7 @@ control MyIngress(inout headers hdr,
 
 
 
-    table wordDict {
-        key = {
-            hdr.spchk.word : exact;
-        }
-        actions = {
-            installWordEntry;
-            defaultFail;
-            drop;
-            NoAction;
-        }
-        size=1024;
-        default_action = defaultFail(); //failed to find match
-    }
-
+    
     apply {
         packetForward.apply();
         wordDict.apply();

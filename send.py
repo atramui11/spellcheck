@@ -56,8 +56,8 @@ def main():
     rsps=99 #means iniitially incorrect
     pkt = pkt / IP(dst=addr) / TCP(dport=dst_id, sport=2) / SPCHK(rsp=rsps,word=word) / args.message
     
-    pkt.show2()
-#    hexdump(pkt)
+#    pkt.show2()
+    hexdump(pkt)
 #    print "len(pkt) = ", len(pkt)
 
     sendp(pkt, iface=iface, verbose=False)

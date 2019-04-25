@@ -51,8 +51,9 @@ def populateDictTable(sw):
     #it only encodes exactly the word length (10 bytes=10 letters)
     #as specified in P4 program!
 
+    word = "tripolitan" 
     sw.insertTableEntry(table_name = 'MyIngress.wordDict',
-                    match_fields = {'hdr.spchk.word': "tripolitan"},
+                    match_fields = {'hdr.spchk.word':[word, 8*len(word)]},
                     action_name = 'MyIngress.installWordEntry',
                     action_params = {'resp' : 1})
     """

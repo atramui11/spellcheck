@@ -30,6 +30,8 @@ def get_if():
 def handle_pkt(pkt):
     if SPCHK in pkt and (TCP in pkt and pkt[TCP].dport == 1):
         print "\n\n\nSERVER RECEIVED PACKET. WORD IS: \n\n" + str(pkt[SPCHK].word)
+        for elem in pkt[SPCHK].word:
+            print elem
         #pkt.show2()
 
         #if there is a match in P4 table wordDict P4 code should send back pkt to client rsp=1
