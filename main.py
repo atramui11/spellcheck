@@ -30,7 +30,8 @@ s1.insertTableEntry(table_name='MyIngress.portFwd',
 ##############WORD TO SPELLCHECK
 
 #
-inputWord = "dog"
+#inputWord = "yog"
+matchSize = 3
 #
 
 ########################
@@ -45,7 +46,6 @@ def addForwardingRule(sw, sport, dport):
 
 #P4 Table Entries for matching SPCHK.word header for spellcheck
 def populateDictTable(sw):
-    """
     #load dictionary.json into a list
 
     data = None
@@ -54,13 +54,20 @@ def populateDictTable(sw):
 
     #each p is a word to install in the table
     for p in data:
-        print "installing entry: " + str(p)
-        ack = 1
-        if str(p) is "tripolitan":
-            print "p is tripolitan"
-    """
+               
+        if len(str(p)) is matchSize:
+            print "installing entry: " + str(p)
+            word1 = str(p)
+            sw.insertTableEntry(table_name = 'MyIngress.wordDict%d'%matchSize,
+                    match_fields = {'hdr.spchk.spchk%d.word'%matchSize :word1},
+                    action_name = 'MyIngress.installWordEntry%d'%matchSize,
+                    action_params = {'resp' : 1})
+    
 
     
+
+    #single test words
+    """
     word1 = "glut" 
     sw.insertTableEntry(table_name = 'MyIngress.wordDict4',
                     match_fields = {'hdr.spchk.spchk4.word':word1},
@@ -79,7 +86,7 @@ def populateDictTable(sw):
                     match_fields = {'hdr.spchk.spchk2.word':word3},
                     action_name = 'MyIngress.installWordEntry2',
                     action_params = {'resp' : 1})
-
+    """
 
 ################################# MAIN ###################################
 
@@ -114,10 +121,25 @@ def main():
     time.sleep(0.4) #delay server before starting client 
     
 
-    #############  CLIENT sends word to server (1)
-    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
-    #client = h2.cmd('./send.py 10.0.0.1 "AA"', stdout=sys.stdout, stderr=sys.stdout)     
+    #############  CLIENT sends words to server (1)
+    inputWord = "yog"
+    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout)     
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
+
+
+    inputWord = "cog"
+    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
+    print "\n\n client send says: \n\n" + client.strip() + "\n\n"
+
+    inputWord = "log"
+    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
+    print "\n\n client send says: \n\n" + client.strip() + "\n\n"
+
+    inputWord = "hog"
+    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
+    print "\n\n client send says: \n\n" + client.strip() + "\n\n"
+
+
 
     time.sleep(4) #delay for server to receive and forward packet via P4
 
