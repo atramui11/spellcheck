@@ -29,17 +29,18 @@ def get_if():
 #client 2 and server 1 packet handling code
 def handle_pkt(pkt):
     if SPCHK in pkt and (TCP in pkt and pkt[TCP].dport == 1):
-        print "\n\n\nSERVER RECEIVED PACKET. WORD IS: \n\n" + str(pkt[SPCHK].word)
+        print "\n\n\nSERVER RECEIVED PACKET. WORD LENGTH IS: \n\n" + str(len(pkt[SPCHK].word))
+        print "word is: \n"
         for elem in pkt[SPCHK].word:
             print elem
-        #pkt.show2()
+        pkt.show2()
 
         #if there is a match in P4 table wordDict P4 code should send back pkt to client rsp=1
         if pkt[SPCHK].rsp is 1:
             print "\n\n\nSPELLCHECKED, WORD IS CORRECT\n\n\n"
             iface = get_if()
             pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=1) / "PAYLOAD"
+            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=1,word="Y") / "PAYLOAD"
             #pkt.show2()
             sendp(pkt, iface=iface, verbose=False)
         else:
@@ -47,7 +48,7 @@ def handle_pkt(pkt):
             print "\n\n\nWORD FAILED SPELLCHECK\n\n\n"
             iface = get_if()
             pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=0) / "PAYLOAD"
+            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=0,word="N") / "PAYLOAD"
             #pkt.show2()
             sendp(pkt, iface=iface, verbose=False)
 

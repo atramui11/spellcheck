@@ -7,10 +7,13 @@ TYPE_IPV4 = 0x0800
 
 class SPCHK(Packet):
     name = "SPCHK"
+    length = 3
     fields_desc = [
-        StrFixedLenField("word","",10),
+        StrLenField("word", "", length_from=lambda x:x.length),
+        #StrFixedLenField("word","",length),
         ByteField("rsp", 2)
         ]
+
     def mysummary(self):
         return self.sprintf("pid=%pid%, dst_id=%dst_id%")
 

@@ -24,6 +24,10 @@ s1.insertTableEntry(table_name='MyIngress.portFwd',
                     action_params={'port':2})
 """
 
+
+
+
+
 #P4 Program to forward packets to the right place
 def addForwardingRule(sw, sport, dport):
     sw.insertTableEntry(table_name='MyIngress.packetForward',
@@ -51,14 +55,28 @@ def populateDictTable(sw):
     #it only encodes exactly the word length (10 bytes=10 letters)
     #as specified in P4 program!
 
-    word = "tripolitan" 
+    word = "glut" 
+    sw.insertTableEntry(table_name = 'MyIngress.wordDict4',
+                    match_fields = {'hdr.spchk.spchk4.word':word},
+                    action_name = 'MyIngress.installWordEntry4',
+                    action_params = {'resp' : 1})
+
+    word = "dog" 
+    sw.insertTableEntry(table_name = 'MyIngress.wordDict3',
+                    match_fields = {'hdr.spchk.spchk3.word':word},
+                    action_name = 'MyIngress.installWordEntry3',
+                    action_params = {'resp' : 1})
+
+    word = "to" 
+    sw.insertTableEntry(table_name = 'MyIngress.wordDict2',
+                    match_fields = {'hdr.spchk.spchk2.word':word},
+                    action_name = 'MyIngress.installWordEntry2',
+                    action_params = {'resp' : 1})
+
+    """
+    word = "dog" 
     sw.insertTableEntry(table_name = 'MyIngress.wordDict',
                     match_fields = {'hdr.spchk.word':[word, 8*len(word)]},
-                    action_name = 'MyIngress.installWordEntry',
-                    action_params = {'resp' : 1})
-    """
-    sw.insertTableEntry(table_name = 'MyIngress.wordDict',
-                    match_fields = {'hdr.spchk.word': "dog"},
                     action_name = 'MyIngress.installWordEntry',
                     action_params = {'resp' : 1})
     """
@@ -81,20 +99,14 @@ def main():
 
     #this line specifically causes server to receive packet. tcp sport 2-->tcp dport 1 
     addForwardingRule(s1,2,1) #client to server forwarding
+    #addForwardingRule(s1,1,2)
 
     #fill dictionary table here
     populateDictTable(s1)
 
 
-    #addTunnelFwd(s1,1,1) #dst id 1 gets egressSpec 'port' of 1
-    #addTunnelFwd(s1,2,2) #dst id 2 gets egressSpec 'port' of 2
-
     #dstAddr = h1.intfs[0].mac
-    #print "dstAddr: " + str(h1.intfs[0])
     
-    # table that will match on the input port and set the output egress_spec
-
-
 
     #server 10.0.0.1 client 10.0.0.2
     #############  SERVER
@@ -103,7 +115,7 @@ def main():
     
 
     #############  CLIENT sends word to server (1)
-    myWord = "tripolitan"
+    myWord = "dog"
     client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % myWord, stdout=sys.stdout, stderr=sys.stdout) 
     #client = h2.cmd('./send.py 10.0.0.1 "AA"', stdout=sys.stdout, stderr=sys.stdout)     
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
