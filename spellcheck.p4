@@ -88,7 +88,8 @@ parser MyParser(packet_in packet,
         packet.extract(hdr.ethernet);
         packet.extract(hdr.ipv4);
         packet.extract(hdr.tcp);
-        transition parse3Bytes;
+        //transition parse3Bytes;
+        transition parse4Bytes;
     }
 
     /*
@@ -100,13 +101,13 @@ parser MyParser(packet_in packet,
 
     //extract all possible headers in header union
 
-    /*
+    
     state parse4Bytes {
         packet.extract(hdr.spchk.spchk4);
         transition accept;
         //transition parse3Bytes;
     }
-    */
+    
 
     state parse3Bytes {
         packet.extract(hdr.spchk.spchk3);
@@ -127,8 +128,6 @@ parser MyParser(packet_in packet,
 
 
 
-
-    
 
 
 }
@@ -192,7 +191,7 @@ control MyIngress(inout headers hdr,
     table wordDict4 {
         key = {hdr.spchk.spchk4.word : exact;}
         actions = {installWordEntry4; defaultFail; drop;NoAction;}
-        size=1024;
+        size=65536;
         default_action = defaultFail(); //failed to find match
     }
 

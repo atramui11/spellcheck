@@ -31,7 +31,7 @@ s1.insertTableEntry(table_name='MyIngress.portFwd',
 
 #
 #inputWord = "yog"
-matchSize = 3
+matchSize = 4 #how many bytes P4 compiler puts in each table entry 
 #
 
 ########################
@@ -122,20 +122,20 @@ def main():
     
 
     #############  CLIENT sends words to server (1)
-    inputWord = "yog"
+    inputWord = "glut"
     client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout)     
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 
 
-    inputWord = "cog"
+    inputWord = "card"
     client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 
-    inputWord = "log"
+    inputWord = "yope"
     client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 
-    inputWord = "hog"
+    inputWord = "yolk"
     client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 
