@@ -98,6 +98,8 @@ parser MyParser(packet_in packet,
     }
     */
 
+    //extract all possible headers in header union
+
     /*
     state parse4Bytes {
         packet.extract(hdr.spchk.spchk4);
