@@ -7,8 +7,8 @@ TYPE_IPV4 = 0x0800
 
 class SPCHK(Packet):
     name = "SPCHK"
-    length = 3
     fields_desc = [
+        ByteField("length", 4),
         StrLenField("word", "", length_from=lambda x:x.length),
         #StrFixedLenField("word","",length),
         ByteField("rsp", 2)

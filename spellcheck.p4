@@ -51,10 +51,10 @@ header tcp_t {
 }
 
 
-header spchk1_t { bit<8> word; bit<8> rsp; }
-header spchk2_t { bit<16> word; bit<8> rsp; }
-header spchk3_t { bit<24> word; bit<8> rsp; }
-header spchk4_t { bit<32> word; bit<8> rsp; }
+header spchk1_t {  bit<8> length; bit<8> word;  bit<8> rsp; }
+header spchk2_t {  bit<8> length; bit<16> word; bit<8> rsp; }
+header spchk3_t {  bit<8> length; bit<24> word; bit<8> rsp; }
+header spchk4_t {  bit<8> length; bit<32> word; bit<8> rsp; }
 
 
 //represents a uniform header
@@ -72,7 +72,6 @@ struct headers {
     ipv4_t       ipv4;
     tcp_t        tcp;
     spellCheck_t spchk;
-
 }
 
 /*************************************************************************
@@ -89,44 +88,45 @@ parser MyParser(packet_in packet,
         packet.extract(hdr.ethernet);
         packet.extract(hdr.ipv4);
         packet.extract(hdr.tcp);
-        
-        /*        
-        transition select(hdr.spchk.wordLength) {
-            (true, false, false, false): parse1Byte;
-            (false, true, false, false): parse2Bytes;
-            (false, false, true, false): parse3Bytes;
-            (false, false, false, true): parse4Bytes;
-        }
-        */
-
-        //transition parse4Bytes;
         transition parse3Bytes;
-
-        
-
-        //packet.extract(hdr.spchk);
-        //transition accept;
     }
+
+    /*
+    transition select(hdr.spchk.spchk4.isValid()) {
+        true: parse4Bytes;
+        _: parse3Bytes;
+    }
+    */
+
+    /*
+    state parse4Bytes {
+        packet.extract(hdr.spchk.spchk4);
+        transition accept;
+        //transition parse3Bytes;
+    }
+    */
+
+    state parse3Bytes {
+        packet.extract(hdr.spchk.spchk3);
+        transition accept;
+        //transition parse2Bytes;
+    }
+
+    state parse2Bytes {
+        packet.extract(hdr.spchk.spchk2);
+        transition parse1Byte;
+    }
+
 
     state parse1Byte {
         packet.extract(hdr.spchk.spchk1);
         transition accept;
     }
 
-    state parse2Bytes {
-        packet.extract(hdr.spchk.spchk2);
-        transition accept;
-    }
 
-    state parse3Bytes {
-        packet.extract(hdr.spchk.spchk3);
-        transition accept;
-    }
 
-    state parse4Bytes {
-        packet.extract(hdr.spchk.spchk4);
-        transition accept;
-    }
+
+    
 
 
 }
@@ -170,21 +170,21 @@ control MyIngress(inout headers hdr,
         key = {hdr.spchk.spchk1.word : exact;}
         actions = {installWordEntry1; defaultFail; drop;NoAction;}
         size=1024;
-        default_action = NoAction; 
+        default_action = defaultFail(); 
     }
 
     table wordDict2 {
         key = {hdr.spchk.spchk2.word : exact;}
         actions = {installWordEntry2; defaultFail; drop;NoAction;}
         size=1024;
-        default_action = NoAction; 
+        default_action = defaultFail(); 
     }
 
     table wordDict3 {
         key = {hdr.spchk.spchk3.word : exact;}
         actions = {installWordEntry3; defaultFail; drop;NoAction;}
         size=1024;
-        default_action = NoAction; 
+        default_action = defaultFail(); 
     }
 
     table wordDict4 {

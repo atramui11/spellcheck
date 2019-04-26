@@ -40,7 +40,7 @@ def handle_pkt(pkt):
             print "\n\n\nSPELLCHECKED, WORD IS CORRECT\n\n\n"
             iface = get_if()
             pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=1,word="Y") / "PAYLOAD"
+            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(length=1, word="Y", rsp=1) / "PAYLOAD"
             #pkt.show2()
             sendp(pkt, iface=iface, verbose=False)
         else:
@@ -48,7 +48,7 @@ def handle_pkt(pkt):
             print "\n\n\nWORD FAILED SPELLCHECK\n\n\n"
             iface = get_if()
             pkt =  Ether(src=get_if_hwaddr(iface), dst='ff:ff:ff:ff:ff:ff')
-            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(rsp=0,word="N") / "PAYLOAD"
+            pkt = pkt / IP(dst="10.0.0.2") / TCP(dport=2) / SPCHK(length=1,word="N",rsp=0) / "PAYLOAD"
             #pkt.show2()
             sendp(pkt, iface=iface, verbose=False)
 

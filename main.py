@@ -27,6 +27,13 @@ s1.insertTableEntry(table_name='MyIngress.portFwd',
 
 
 
+##############WORD TO SPELLCHECK
+
+#
+inputWord = "dog"
+#
+
+########################
 
 #P4 Program to forward packets to the right place
 def addForwardingRule(sw, sport, dport):
@@ -40,6 +47,7 @@ def addForwardingRule(sw, sport, dport):
 def populateDictTable(sw):
     """
     #load dictionary.json into a list
+
     data = None
     with open('dictionary.json') as json_file:  
         data = json.load(json_file)
@@ -52,34 +60,26 @@ def populateDictTable(sw):
             print "p is tripolitan"
     """
 
-    #it only encodes exactly the word length (10 bytes=10 letters)
-    #as specified in P4 program!
-
-    word = "glut" 
+    
+    word1 = "glut" 
     sw.insertTableEntry(table_name = 'MyIngress.wordDict4',
-                    match_fields = {'hdr.spchk.spchk4.word':word},
+                    match_fields = {'hdr.spchk.spchk4.word':word1},
                     action_name = 'MyIngress.installWordEntry4',
                     action_params = {'resp' : 1})
+    
 
-    word = "dog" 
+    word2 = "dog" 
     sw.insertTableEntry(table_name = 'MyIngress.wordDict3',
-                    match_fields = {'hdr.spchk.spchk3.word':word},
+                    match_fields = {'hdr.spchk.spchk3.word':word2},
                     action_name = 'MyIngress.installWordEntry3',
                     action_params = {'resp' : 1})
 
-    word = "to" 
+    word3 = "to" 
     sw.insertTableEntry(table_name = 'MyIngress.wordDict2',
-                    match_fields = {'hdr.spchk.spchk2.word':word},
+                    match_fields = {'hdr.spchk.spchk2.word':word3},
                     action_name = 'MyIngress.installWordEntry2',
                     action_params = {'resp' : 1})
 
-    """
-    word = "dog" 
-    sw.insertTableEntry(table_name = 'MyIngress.wordDict',
-                    match_fields = {'hdr.spchk.word':[word, 8*len(word)]},
-                    action_name = 'MyIngress.installWordEntry',
-                    action_params = {'resp' : 1})
-    """
 
 ################################# MAIN ###################################
 
@@ -115,15 +115,14 @@ def main():
     
 
     #############  CLIENT sends word to server (1)
-    myWord = "dog"
-    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % myWord, stdout=sys.stdout, stderr=sys.stdout) 
+    client = h2.cmd('./send.py 10.0.0.1 "PAYLOAD" %s --dst_id 1' % inputWord, stdout=sys.stdout, stderr=sys.stdout) 
     #client = h2.cmd('./send.py 10.0.0.1 "AA"', stdout=sys.stdout, stderr=sys.stdout)     
     print "\n\n client send says: \n\n" + client.strip() + "\n\n"
 
-    time.sleep(8) #delay for server to receive and forward packet via P4
+    time.sleep(4) #delay for server to receive and forward packet via P4
 
     #############  MININET
-    CLI(net) 
+    #CLI(net) 
     
 
     #############  END
